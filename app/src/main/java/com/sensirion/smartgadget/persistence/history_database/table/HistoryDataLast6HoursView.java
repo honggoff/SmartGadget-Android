@@ -27,20 +27,20 @@ public class HistoryDataLast6HoursView extends AbstractHistoryDataView {
     @NonNull
     public String createSqlStatement() {
         /*  CREATE VIEW IF NOT EXISTS  history_data_last_6_hours
-            AS (SELECT device_mac, timestamp, temperature, humidity
+            AS SELECT device_mac, timestamp, temperature, humidity
             FROM history_data
             WHERE bin_size = 3
             UNION
-            SELECT device_mac, AVG(timestamp), AVG(temperature), AVG(humidity)
+            SELECT device_mac, CAST(AVG(timestamp), AVG(temperature), AVG(humidity)
             FROM history_data_last_10_min
-            GROUP BY device_mac, ROUND ((now() - timestamp) / 360);
+            GROUP BY device_mac, ROUND(timestamp / 1000 / 360);
         */
 
         final String oneHourBeanSqlSelect = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = %d",
                 HistoryDataTable.COLUMN_DEVICE_ADDRESS, HistoryDataTable.COLUMN_TIMESTAMP, HistoryDataTable.COLUMN_TEMPERATURE, HistoryDataTable.COLUMN_HUMIDITY,
                 HistoryDataTable.TABLE_NAME, HistoryDataTable.COLUMN_BIN_SIZE, BIN_SIZE);
 
-        final String previousBeanSql = String.format("SELECT %s, AVG(%s), AVG(%s), AVG(%s) FROM %s GROUP BY %s, ROUND((%s - %s) / %d)",
+        final String previousBeanSql = String.format("SELECT %s, CAST(AVG(%s) AS INTEGER), AVG(%s), AVG(%s) FROM %s GROUP BY %s, %s / %d)",
                 HistoryDataTable.COLUMN_DEVICE_ADDRESS, HistoryDataTable.COLUMN_TIMESTAMP, HistoryDataTable.COLUMN_TEMPERATURE, HistoryDataTable.COLUMN_HUMIDITY,
                 HistoryDataLast1HourView.VIEW_NAME, HistoryDataTable.COLUMN_DEVICE_ADDRESS, System.currentTimeMillis(), HistoryDataTable.COLUMN_TIMESTAMP, getResolution());
 

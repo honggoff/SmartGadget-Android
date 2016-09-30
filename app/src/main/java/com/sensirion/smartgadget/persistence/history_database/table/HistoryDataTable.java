@@ -131,20 +131,21 @@ public class HistoryDataTable extends AbstractDatabaseObject {
     private Queue<String> updateBin(final int numSecondsScale, final int numSecondsResolution, final int initialBinSize) {
         final Queue<String> updateBeanSql = new LinkedList<>();
 
-        final String beanParserSql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s)",
+        final String beanParserSql =
+            String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s)",
                 getName(), COLUMN_DEVICE_ADDRESS, COLUMN_TIMESTAMP, COLUMN_TEMPERATURE, COLUMN_HUMIDITY, COLUMN_COMES_FROM_LOG, COLUMN_BIN_SIZE)
-                + String.format(" SELECT hd.%s, ROUND(AVG(hd.%s)), AVG(hd.%s), AVG(hd.%s), hd.%s, %s ",
+            + String.format(" SELECT hd.%s, CAST(AVG(hd.%s) AS INTEGER), AVG(hd.%s), AVG(hd.%s), hd.%s, %s ",
                 COLUMN_DEVICE_ADDRESS, COLUMN_TIMESTAMP, COLUMN_TEMPERATURE, COLUMN_HUMIDITY, COLUMN_COMES_FROM_LOG, (initialBinSize + 1))
-                + String.format(" FROM %s hd", getName())
-                + String.format(" WHERE hd.%s = %d AND %s - hd.%s > %d",
-                COLUMN_BIN_SIZE, initialBinSize, System.currentTimeMillis(), COLUMN_TIMESTAMP, numSecondsScale)
-                + String.format(" GROUP BY %s, %s, ((%s - %s)/%d);", COLUMN_DEVICE_ADDRESS, COLUMN_COMES_FROM_LOG, System.currentTimeMillis(),
-                COLUMN_TIMESTAMP, numSecondsResolution);
+            + String.format(" FROM %s hd", getName())
+            + String.format(" WHERE hd.%s = %d AND hd.%s < %d",
+                COLUMN_BIN_SIZE, initialBinSize, COLUMN_TIMESTAMP, System.currentTimeMillis() - numSecondsScale)
+            + String.format(" GROUP BY %s, %s, (%s / %d);",
+                COLUMN_DEVICE_ADDRESS, COLUMN_COMES_FROM_LOG, COLUMN_TIMESTAMP, numSecondsResolution);
 
         updateBeanSql.add(beanParserSql);
 
-        updateBeanSql.add(String.format("DELETE FROM %s WHERE %s = %d AND %s - %s > %s;",
-                getName(), COLUMN_BIN_SIZE, initialBinSize, System.currentTimeMillis(), COLUMN_TIMESTAMP, numSecondsScale));
+        updateBeanSql.add(String.format("DELETE FROM %s WHERE %s = %d AND %s < %d;",
+                getName(), COLUMN_BIN_SIZE, initialBinSize, COLUMN_TIMESTAMP, System.currentTimeMillis() - numSecondsScale));
 
         return updateBeanSql;
     }

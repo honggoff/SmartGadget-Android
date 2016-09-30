@@ -27,13 +27,12 @@ public class HistoryDataLast1WeekView extends AbstractHistoryDataView {
     @NonNull
     public String createSqlStatement() {
         /*  CREATE VIEW IF NOT EXISTS history_data_last_1_week
-            AS (SELECT device_mac, timestamp, temperature, humidity
+            AS SELECT device_mac, timestamp, temperature, humidity
             FROM history_data
             WHERE bin_size = 5
             UNION
-            SELECT device_mac, AVG(timestamp), AVG(temperature), AVG(humidity)
-            FROM history_data_1_day
-            GROUP BY device_mac, ROUND ((now() - timestamp) / SECONDS_IN_ONE_DAY_RESOLUTION);
+            SELECT device_mac, timestamp, temperature, humidity
+            FROM history_data_1_day;
         */
 
         final String oneWeekSqlSelect = String.format("SELECT %s, %s, %s, %s FROM %s WHERE %s = %d",
